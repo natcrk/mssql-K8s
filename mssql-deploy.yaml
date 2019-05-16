@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mssql
+  labels:
+    app: mssql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mssql
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mssql
+          image: microsoft/mssql-server-linux:2017-latest
+          env:
+            - name: MSSQL_PID
+              value: Developer
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mssql
+                  key: SA_PASSWORD 
+          ports:
+            - name: mssql
+              containerPort: 1433
+          volumeMounts:
+            - name: mssql-data-01-pvc
+              mountPath: /var/opt/mssql
+            - name: mssql-backup-01-pvc
+              mountPath: /var/opt/bkp
+      volumes:
+        - name: mssql-data-01-pvc
+          persistentVolumeClaim:
+            claimName: mssql-data-01
+        - name: mssql-backup-01-pvc
+          persistentVolumeClaim:
+            claimName: mssql-backup-01
